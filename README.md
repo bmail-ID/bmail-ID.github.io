@@ -5,6 +5,8 @@ Built from the original research prototype, included (anonymised for review: aut
 `prototype_extract/SOURCE_SHA256.txt`; open it directly in a browser to see the original mock-up).
 Pure Python 3 standard library on the back end and plain HTML/CSS/JS on the front end: nothing to install.
 
+**Online:** prototype <https://bmail-ID.github.io/prototype> · source code <https://bmail-ID.github.io/code>.
+
 **Quick start:** `python run_server.py`, then open <http://127.0.0.1:8765/>. Tests: `python run_tests.py`.
 
 ## 1. What the prototype actually was
