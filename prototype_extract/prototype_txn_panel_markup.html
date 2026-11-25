@@ -1,0 +1,73 @@
+<div class="txn-panel" id="txn-panel">
+  <div class="txn-header" onclick="toggleTxnPanel()">
+    <div>
+      <div class="txn-header-title"><i class="ti ti-arrows-exchange"></i> Prof. Morgan — Transactions</div>
+      <div class="txn-header-sub" id="txn-header-sub">0 / 4 complete · click to expand</div>
+    </div>
+    <button class="txn-toggle" id="txn-toggle-btn">▲</button>
+  </div>
+  <div class="txn-body">
+
+    <div class="txn-status-row">
+      <span id="gs1" class="badge b-gray" style="font-size:10px">1. SKT bCA</span>
+      <span id="gs2" class="badge b-gray" style="font-size:10px">2. bMail ID</span>
+      <span id="gs3" class="badge b-gray" style="font-size:10px">3. Amazon</span>
+      <span id="gs4" class="badge b-gray" style="font-size:10px">4. Enroll</span>
+    </div>
+
+    <!-- Txn 1 -->
+    <button class="txn-btn" id="tb1" onclick="doT1()">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-building-broadcast-tower" style="font-size:13px;color:var(--amber-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">1. SKT joins as bCA</div>
+          <div class="txn-btn-desc">SK Telecom · zero-copy protocol</div>
+        </div>
+      </div>
+      <span id="tb1-badge" class="badge b-amber" style="font-size:10px">Run</span>
+    </button>
+    <div class="txn-progress" id="tp1"><div class="txn-progress-bar" id="tpb1" style="width:0%"></div></div>
+
+    <!-- Txn 2 -->
+    <button class="txn-btn" id="tb2" onclick="doT2()" disabled="">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-user-plus" style="font-size:13px;color:var(--blue-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">2. Register bMail ID</div>
+          <div class="txn-btn-desc">alex.morgan@bgmail.com</div>
+        </div>
+      </div>
+      <span id="tb2-badge" class="badge b-gray" style="font-size:10px">Locked</span>
+    </button>
+    <div class="txn-progress" id="tp2"><div class="txn-progress-bar" id="tpb2" style="width:0%"></div></div>
+
+    <!-- Txn 3 -->
+    <button class="txn-btn" id="tb3" onclick="doT3()">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-building-store" style="font-size:13px;color:var(--purple-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">3. Amazon joins bMember</div>
+          <div class="txn-btn-desc">ID-change protocol · review tiers</div>
+        </div>
+      </div>
+      <span id="tb3-badge" class="badge b-amber" style="font-size:10px">Run</span>
+    </button>
+    <div class="txn-progress" id="tp3"><div class="txn-progress-bar" id="tpb3" style="width:0%"></div></div>
+
+    <!-- Txn 4 -->
+    <button class="txn-btn" id="tb4" onclick="doT4()" disabled="">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-id-badge-2" style="font-size:13px;color:var(--green-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">4. Enroll at Amazon</div>
+          <div class="txn-btn-desc">Prof. Morgan → Amazon bMember</div>
+        </div>
+      </div>
+      <span id="tb4-badge" class="badge b-gray" style="font-size:10px">Locked</span>
+    </button>
+    <div class="txn-progress" id="tp4"><div class="txn-progress-bar" id="tpb4" style="width:0%"></div></div>
+
+    <div id="txn-log" class="txn-log"></div>
+
+  </div><!-- /txn-body -->
+</div><!-- /txn-panel -->

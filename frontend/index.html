@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<!-- GENERATED FILE SOURCE. index.html is built from this template by tools/build_frontend.py:
+     each {{KEEP a-b}} line is replaced by lines a..b of the original prototype HTML, verbatim. -->
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bMail ID Infrastructure — Research Prototype</title>
+<!-- Icon font. The prototype linked a local copy that is not on disk; this CDN copy is optional:
+     offline, icons are blank and everything else works. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Registration Modal (prototype lines 270-414, now submitting to the API) -->
+<div class="modal-wrap" id="modal-register">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Register for a bMail ID</div>
+      <button class="modal-close" onclick="closeModal('modal-register')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="wizard-progress" id="wiz-progress">
+      <div class="wiz-step"><div class="wiz-circle active" id="wc1">1</div><div class="wiz-label active" id="wl1">Basic info</div></div>
+      <div class="wiz-line" id="wline1"></div>
+      <div class="wiz-step"><div class="wiz-circle" id="wc2">2</div><div class="wiz-label" id="wl2">Select bCA</div></div>
+      <div class="wiz-line" id="wline2"></div>
+      <div class="wiz-step"><div class="wiz-circle" id="wc3">3</div><div class="wiz-label" id="wl3">Backup channels</div></div>
+      <div class="wiz-line" id="wline3"></div>
+      <div class="wiz-step"><div class="wiz-circle" id="wc4">4</div><div class="wiz-label" id="wl4">Confirm</div></div>
+    </div>
+    <div class="wiz-screen active" id="ws1">
+      <div class="alert a-info"><i class="ti ti-info-circle"></i>Your bMail ID is built on an existing email provider. Choose a provider that has partnered with the bMail ISP network.</div>
+      <div class="form-group">
+        <label class="form-label">Base email provider</label>
+        <select class="form-select" id="reg-provider" onchange="updateRegPreview()"></select>
+        <div class="form-hint">Your bMail domain will reflect your chosen provider.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Privacy mode</label>
+        <select class="form-select" id="reg-mode" onchange="updateRegPreview()">
+          <option value="real">Real name — e.g. jiyeon.park@bgmail.com</option>
+          <option value="anon">Anonymous — e.g. 19902301@bgmail.com</option>
+        </select>
+        <div class="form-hint">Both options carry domain-level identifiability. Your email name is your choice. Leave the name empty in anonymous mode to get a generated number.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferred email name</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="e.g. jiyeon.park or 19902301" oninput="updateRegPreview()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your display name (kept in your own client, never sent to the ISP)</label>
+        <input type="text" class="form-input" id="reg-display" placeholder="e.g. Jiyeon Park">
+      </div>
+      <div class="alert a-info" id="reg-preview" style="margin-bottom:0"><i class="ti ti-mail"></i>Your bMail ID will be: <strong id="preview-addr">jiyeon.park@bgmail.com</strong></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="wizNext(1)">Next <i class="ti ti-arrow-right"></i></button></div>
+    </div>
+    <div class="wiz-screen" id="ws2">
+      <div class="alert a-info"><i class="ti ti-shield-check"></i>Select a Certification Authority (bCA). They will certify your identity using data they already hold — no new personal data is submitted.</div>
+      <div id="bca-options"></div>
+      <div class="form-group" style="margin-top:8px">
+        <label class="form-label">Your subscriber / account number at this bCA</label>
+        <input type="text" class="form-input" id="reg-subscriber" placeholder="e.g. KT-1002">
+        <div class="form-hint">Sent only to the bCA, which returns a signed consent token. Demo records: KT-1002, KB-5001, SKT-2001 (after SKT joins), Shinhan / China Mobile / ICBC hold none.</div>
+      </div>
+      <div class="alert a-warn" style="margin-top:8px"><i class="ti ti-lock"></i>Your personal data stays at the bCA. Only a signed certificate (not your data) is passed to the bMail ISP.</div>
+      <div class="btn-row">
+        <button class="btn" onclick="wizBack(2)"><i class="ti ti-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" onclick="wizNext(2)">Next <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+    <div class="wiz-screen" id="ws3">
+      <div class="alert a-info"><i class="ti ti-shield"></i>Register backup communication channels. These are used only to verify you if a recipient reports a phishing attempt from your address. They are never disclosed.</div>
+      <div class="form-group"><label class="form-label">Backup email address</label><input type="text" class="form-input" id="reg-bk-email" placeholder="e.g. yourname@gmail.com"><div class="form-hint">Must be a different address from your bMail ID.</div></div>
+      <div class="form-group"><label class="form-label">Messenger ID (optional)</label><input type="text" class="form-input" id="reg-bk-messenger" placeholder="e.g. KakaoTalk ID or WeChat ID"></div>
+      <div class="form-group"><label class="form-label">Phone number (optional)</label><input type="text" class="form-input" id="reg-bk-phone" placeholder="e.g. +82-10-XXXX-XXXX"></div>
+      <div class="alert a-warn"><i class="ti ti-alert-triangle"></i>At least one backup channel is required for the verification service to function. Channels are validated annually.</div>
+      <div class="btn-row">
+        <button class="btn" onclick="wizBack(3)"><i class="ti ti-arrow-left"></i> Back</button>
+        <button class="btn btn-primary" onclick="wizNext(3)">Next <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+    <div class="wiz-screen" id="ws4">
+      <div class="alert a-success"><i class="ti ti-circle-check"></i>Review your bMail ID registration before submitting.</div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="field"><span class="field-lbl">bMail address</span><span class="field-val mono" id="confirm-addr"></span></div>
+        <div class="field"><span class="field-lbl">Privacy mode</span><span class="field-val" id="confirm-mode"></span></div>
+        <div class="field"><span class="field-lbl">Certification Authority</span><span class="field-val" id="confirm-bca"></span></div>
+        <div class="field"><span class="field-lbl">Backup channels</span><span class="field-val" id="confirm-channels"></span></div>
+        <div class="field"><span class="field-lbl">ID sustainability</span><span class="badge b-blue">Lifelong</span></div>
+        <div class="field"><span class="field-lbl">Personal data at ISP?</span><span class="badge b-green"><i class="ti ti-check"></i> Never stored</span></div>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="consent1"><label for="consent1" style="font-size:13px">I consent to the bCA certifying my identity for the bMail ID service only, and understand my personal data stays at the bCA.</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="consent2"><label for="consent2" style="font-size:13px">I agree to be identifiable to legitimate receivers upon valid request and my own approval.</label></div>
+      <div id="reg-done" style="display:none" class="alert a-success"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="wizBack(4)"><i class="ti ti-arrow-left"></i> Back</button>
+        <button class="btn btn-success" id="reg-submit" onclick="submitReg()"><i class="ti ti-send"></i> Submit registration</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ID Change Modal (prototype lines 417-450) -->
+<div class="modal-wrap" id="modal-idchange">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Secure ID change protocol</div>
+      <button class="modal-close" onclick="closeModal('modal-idchange')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="alert a-warn"><i class="ti ti-alert-triangle"></i>Your old email ID will be deactivated. This initiates the bMail secure ID-change protocol to migrate your platform memberships.</div>
+    <div class="form-group"><label class="form-label">Current (expiring) member ID</label><input type="text" class="form-input" id="chg-old"></div>
+    <div class="form-group"><label class="form-label">New bMail ID</label><input type="text" class="form-input" id="chg-new" readonly style="background:var(--bg2)"></div>
+    <div class="form-group"><label class="form-label">Platforms to update</label><div id="chg-platforms"></div></div>
+    <div class="steps" id="chg-steps"></div>
+    <div id="idchange-done" style="display:none" class="alert a-success"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="chg-submit" onclick="submitIDChange()"><i class="ti ti-arrows-exchange"></i> Initiate change</button>
+      <button class="btn btn-success" id="chg-auto" style="display:none" onclick="runChangeAsOperators()"><i class="ti ti-player-play"></i> Act as bCA + ISP operators (demo)</button>
+      <button class="btn" onclick="closeModal('modal-idchange')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phishing verification modal (prototype lines 453-472) -->
+<div class="modal-wrap" id="modal-phishing">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Phishing verification — ISP process</div>
+      <button class="modal-close" onclick="closeModal('modal-phishing')"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="phishing-body"></div>
+    <div id="phishing-done" style="display:none" class="alert a-success"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="phishing-process" onclick="processPhishing()"><i class="ti ti-send"></i> Process verification</button>
+      <button class="btn" onclick="closeModal('modal-phishing')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Token inspector (new) -->
+<div class="modal-wrap" id="modal-token">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Signed token inspector</div>
+      <button class="modal-close" onclick="closeModal('modal-token')"><i class="ti ti-x"></i></button>
+    </div>
+    <textarea class="form-input mono" id="token-text" rows="5" style="width:100%"></textarea>
+    <div class="btn-row"><button class="btn btn-primary" onclick="verifyToken()"><i class="ti ti-shield-check"></i> Verify signature</button></div>
+    <div id="token-result" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ══════════════ APP SHELL ══════════════ -->
+<div class="app">
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-name"><i class="ti ti-mail" style="color:var(--blue-600)"></i> bMail ID</div>
+      <div class="brand-sub">Infrastructure Prototype</div>
+    </div>
+    <div class="nav-section">User</div>
+    <div class="nav-item active" onclick="showView('user-dashboard')"><i class="ti ti-layout-dashboard"></i> My dashboard</div>
+    <div class="nav-item" onclick="showView('user-identity')"><i class="ti ti-id-badge-2"></i> My bMail identity</div>
+    <div class="nav-item" onclick="showView('user-platforms')"><i class="ti ti-building-store"></i> Platform memberships</div>
+    <div class="nav-item" onclick="showView('user-events')"><i class="ti ti-history"></i> Events &amp; requests</div>
+    <div class="nav-item" onclick="openRegister()"><i class="ti ti-plus"></i> Register bMail ID</div>
+    <div class="nav-section">bMail ISP</div>
+    <div class="nav-item" onclick="showView('isp-dashboard')"><i class="ti ti-server"></i> ISP overview</div>
+    <div class="nav-item" onclick="showView('isp-requests')"><i class="ti ti-inbox"></i> Request queue <span class="nav-badge" id="isp-req-badge">0</span></div>
+    <div class="nav-item" onclick="showView('isp-domains')"><i class="ti ti-world"></i> Domain registry</div>
+    <div class="nav-item" onclick="showView('isp-stats')"><i class="ti ti-chart-line"></i> Trust stats</div>
+    <div class="nav-section">Certification Authority</div>
+    <div class="nav-item" onclick="showView('bca-dashboard')"><i class="ti ti-shield-check"></i> bCA overview</div>
+    <div class="nav-item" onclick="showView('bca-certifications')"><i class="ti ti-file-certificate"></i> Certifications <span class="nav-badge" id="bca-req-badge">0</span></div>
+    <div class="nav-item" onclick="showView('bca-partners')"><i class="ti ti-link"></i> ISP partnerships</div>
+    <div class="nav-section">bMember Platform</div>
+    <div class="nav-item" onclick="showView('plat-dashboard')"><i class="ti ti-building-store"></i> Platform overview</div>
+    <div class="nav-item" onclick="showView('plat-members')"><i class="ti ti-users"></i> Member management</div>
+    <div class="nav-item" onclick="showView('plat-reviews')"><i class="ti ti-star"></i> Review trust layer</div>
+    <div class="nav-item" onclick="showView('plat-unreachable')"><i class="ti ti-alert-circle"></i> Unreachable members</div>
+    <div class="nav-section">Receiver &amp; public</div>
+    <div class="nav-item" onclick="showView('domain-portal')"><i class="ti ti-search"></i> Domain verification portal</div>
+    <div class="nav-item" onclick="showView('receiver')"><i class="ti ti-user-question"></i> Receiver tools</div>
+    <div class="nav-item" onclick="showView('outbox')"><i class="ti ti-message-circle"></i> Backup-channel outbox <span class="nav-badge" id="outbox-badge">0</span></div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showView('trust-flows')"><i class="ti ti-arrows-exchange"></i> Trust flow visualizer</div>
+    <div class="nav-item" onclick="showView('architecture')"><i class="ti ti-sitemap"></i> Architecture</div>
+    <div class="sidebar-footer">
+      Bright Internet Initiative<br>
+      Design Science Research Prototype<br>
+      Anonymous (2025) · v1.0 · source build<br>
+      <a href="#" onclick="resetDemo();return false">Reset demo data</a>
+    </div>
+  </nav>
+
+  <main class="main"><div class="content">
+
+<!-- USER — DASHBOARD -->
+<div class="view active" id="view-user-dashboard">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div>
+      <div class="page-title">My bMail dashboard</div>
+      <div class="page-sub">Logged in as <span id="ud-email">—</span> · Certified by <span id="ud-ca">—</span></div>
+    </div>
+    <div><label class="form-label">Act as user</label><select class="form-select" id="user-select" onchange="setUser(this.value)" style="width:280px"></select></div>
+  </div>
+  <div class="g4" style="margin-bottom:1rem" id="ud-metrics"></div>
+  <div class="g2">
+    <div class="card sh-user" id="ud-identity"></div>
+    <div class="card sh-user"><div class="card-header"><div class="card-title"><i class="ti ti-bell"></i> Pending actions</div></div><div id="ud-pending"></div></div>
+  </div>
+  <div class="card sh-user"><div class="card-header"><div class="card-title"><i class="ti ti-history"></i> Recent events</div></div><div class="timeline" id="user-events-timeline"></div></div>
+</div>
+
+<!-- USER — IDENTITY -->
+<div class="view" id="view-user-identity">
+  <div class="page-header"><div class="page-title">My bMail identity</div><div class="page-sub">Manage identifiability, privacy mode, and verification channels</div></div>
+  <div class="g2">
+    <div class="card sh-user" id="uid-settings"></div>
+    <div class="card sh-user" id="uid-channels"></div>
+  </div>
+  <div class="card sh-user">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-key"></i> Identifiable anonymity explained</div>
+    <div class="g3">
+      <div style="padding:.875rem;background:var(--blue-50);border-radius:var(--radius);border:0.5px solid var(--blue-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--blue-800);margin-bottom:6px"><i class="ti ti-eye-off"></i> Anonymous mode</div>
+        <div style="font-size:12px;color:var(--blue-600);line-height:1.7">Email name is a pseudonym (19902301). Receivers cannot identify your real name. However, <strong>bgmail.com domain certifies identifiability</strong> — you can be contacted through the ISP if needed.</div>
+      </div>
+      <div style="padding:.875rem;background:var(--green-50);border-radius:var(--radius);border:0.5px solid var(--green-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--green-800);margin-bottom:6px"><i class="ti ti-eye"></i> Real name mode</div>
+        <div style="font-size:12px;color:var(--green-600);line-height:1.7">Email name shows your real name (j.park). Receivers recognize you instantly. Certification by KT Telecom adds a second layer of trust beyond the name alone.</div>
+      </div>
+      <div style="padding:.875rem;background:var(--purple-50);border-radius:var(--radius);border:0.5px solid var(--purple-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--purple-800);margin-bottom:6px"><i class="ti ti-shield-check"></i> Both modes</div>
+        <div style="font-size:12px;color:var(--purple-600);line-height:1.7">The bMail <strong>domain name</strong> (bgmail.com) always signals identifiability — regardless of the email name. Domain cannot be spoofed at the transport layer (DKIM/SPF/DMARC).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER — PLATFORMS -->
+<div class="view" id="view-user-platforms">
+  <div class="page-header"><div class="page-title">Platform memberships</div><div class="page-sub">All platforms where you are registered using this bMail ID or linked accounts</div></div>
+  <div class="g4" style="margin-bottom:1rem" id="up-metrics"></div>
+  <div class="card sh-user">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-building-store"></i> Registered platforms</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Platform</th><th>Member ID</th><th>Since</th><th>Status</th><th>Orders/activity</th><th>Action</th></tr></thead><tbody id="user-plat-tbody"></tbody></table></div>
+  </div>
+  <div class="alert a-info"><i class="ti ti-info-circle"></i>bMember platforms recognise your bMail ID as certified and identifiable. Legacy platforms can be upgraded once they adopt the bMail ID-change protocol.</div>
+</div>
+
+<!-- USER — EVENTS -->
+<div class="view" id="view-user-events">
+  <div class="page-header"><div class="page-title">Events &amp; requests</div><div class="page-sub">All identification requests, verification events, and system notifications</div></div>
+  <div class="card sh-user">
+    <div class="inner-tabs">
+      <div class="inner-tab active" onclick="switchInnerTab(this,'events-all')">All</div>
+      <div class="inner-tab" onclick="switchInnerTab(this,'events-id')">Identification</div>
+      <div class="inner-tab" onclick="switchInnerTab(this,'events-ver')">Verification</div>
+      <div class="inner-tab" onclick="switchInnerTab(this,'events-sys')">System</div>
+    </div>
+    <div class="inner-panel active" id="events-all"></div>
+    <div class="inner-panel" id="events-id"></div>
+    <div class="inner-panel" id="events-ver"></div>
+    <div class="inner-panel" id="events-sys"></div>
+  </div>
+</div>
+
+<!-- ISP — DASHBOARD -->
+<div class="view" id="view-isp-dashboard">
+  <div class="page-header"><div class="page-title">bMail ISP — operator console</div><div class="page-sub">System overview for <span id="isp-domain-list"></span></div></div>
+  <div class="g4" style="margin-bottom:1rem" id="isp-metrics"></div>
+  <div class="g2">
+    <div class="card sh-isp"><div class="card-header"><div class="card-title"><i class="ti ti-world"></i> Domain health</div><button class="btn btn-sm" onclick="showView('isp-domains')">View all</button></div><div id="isp-health"></div><div class="btn-row"><button class="btn btn-sm btn-primary" onclick="showView('domain-portal')"><i class="ti ti-search"></i> Open domain portal</button></div></div>
+    <div class="card sh-isp"><div class="card-header"><div class="card-title"><i class="ti ti-inbox"></i> Latest requests</div><button class="btn btn-sm btn-primary" onclick="showView('isp-requests')">View queue</button></div><div id="isp-latest"></div></div>
+  </div>
+  <div class="card sh-isp"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-chart-bar"></i> Trust propagation — 30 day overview (prototype baseline + this session)</div><div class="g4" id="isp-30d"></div></div>
+</div>
+
+<!-- ISP — REQUEST QUEUE -->
+<div class="view" id="view-isp-requests">
+  <div class="page-header"><div class="page-title">Request queue</div><div class="page-sub" id="isp-req-sub"></div></div>
+  <div class="card sh-isp">
+    <div class="inner-tabs" id="req-tabs"></div>
+    <div class="inner-panel active" id="req-all"></div>
+    <div class="inner-panel" id="req-id"><div class="alert a-info"><i class="ti ti-info-circle"></i>Identification requests are forwarded to the sender for approval. If approved, the ISP requests a certificate from the bCA.</div><div id="req-id-list"></div></div>
+    <div class="inner-panel" id="req-ver"><div class="alert a-warn"><i class="ti ti-alert-triangle"></i>Verification requests involve potentially compromised accounts. Always contact sender via backup channel — never via the flagged email address.</div><div id="req-ver-list"></div></div>
+    <div class="inner-panel" id="req-change"><div class="alert a-info"><i class="ti ti-info-circle"></i>ID change requests require bCA identity verification before a signed change token is issued to the platform.</div><div id="req-change-list"></div></div>
+  </div>
+</div>
+
+<!-- ISP — DOMAIN REGISTRY -->
+<div class="view" id="view-isp-domains">
+  <div class="page-header"><div class="page-title">bMail domain registry</div><div class="page-sub">All registered bMail domains, authentication status, and CA partnerships</div></div>
+  <div class="card sh-isp"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>bMail domain</th><th>Base provider</th><th>CA partners</th><th>Users</th><th>DKIM/SPF</th><th>DMARC</th><th>Portal listed</th><th>Status</th></tr></thead><tbody id="isp-domain-tbody"></tbody></table></div></div>
+  <div class="card sh-isp"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-shield-x"></i> Fake domain intercepts</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Attempted fake domain</th><th>Spoofing target</th><th>Detected via</th><th>Time</th><th>Action taken</th></tr></thead><tbody id="isp-intercept-tbody"></tbody></table></div></div>
+  <div class="g2">
+    <div class="card sh-isp"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-shield-check"></i> bCA registry (pinned keys)</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>bCA</th><th>Domains</th><th>Key id</th><th>Status</th></tr></thead><tbody id="isp-bca-tbody"></tbody></table></div></div>
+    <div class="card sh-isp"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-building-store"></i> bMember platform registry</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Platform</th><th>Joined</th><th>Status</th></tr></thead><tbody id="isp-plat-tbody"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- ISP — STATS (verbatim from the prototype) -->
+<div class="view" id="view-isp-stats">
+  <div class="page-header">
+    <div class="page-title">Trust propagation statistics</div>
+    <div class="page-sub">Measuring the spread of individual and social trust across the bMail network</div>
+  </div>
+  <div class="g2">
+    <div class="card sh-isp">
+      <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-trending-up"></i> Adoption growth</div>
+      <div class="field"><span class="field-lbl">Total bMail users</span><span class="field-val">24,831</span></div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">bgmail.com — 18,402 users</div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:74%;background:var(--blue-400)"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">bnaver.com — 5,210 users</div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:21%;background:var(--teal-400)"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">bcoremail.com — 1,219 users</div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:5%;background:var(--amber-400)"></div></div>
+      </div>
+    </div>
+    <div class="card sh-isp">
+      <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-globe"></i> Cross-country adoption</div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">South Korea</span><span>10,842 users</span></div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:44%;background:var(--purple-400)"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">China</span><span>8,204 users</span></div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:33%;background:var(--coral-400)"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">USA</span><span>5,785 users</span></div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:23%;background:var(--blue-400)"></div></div>
+      </div>
+      <div class="alert a-info" style="margin-top:8px;margin-bottom:0"><i class="ti ti-info-circle"></i>Survey data (Anonymous, 2025): adoption intention supported in all 3 countries (H1–H8 all p &lt; 0.001).</div>
+    </div>
+  </div>
+  <div class="card sh-isp">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-shield"></i> Verification &amp; trust outcomes</div>
+    <div class="g4">
+      <div class="metric"><div class="metric-label">ID approvals (30d)</div><div class="metric-val mv-green">2,841</div><div class="metric-sub">94% approved by users</div></div>
+      <div class="metric"><div class="metric-label">Phishing caught</div><div class="metric-val mv-purple">187</div><div class="metric-sub">Via backup channels</div></div>
+      <div class="metric"><div class="metric-label">ID changes</div><div class="metric-val mv-blue">623</div><div class="metric-sub">Zero fraudulent attempts</div></div>
+      <div class="metric"><div class="metric-label">Zero-copy certifications</div><div class="metric-val mv-teal" style="color:var(--teal-600)" id="isp-zerocopy">24,831</div><div class="metric-sub">No personal data at ISP</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- bCA — DASHBOARD -->
+<div class="view" id="view-bca-dashboard">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">bCA operator portal — <span id="bca-title"></span></div><div class="page-sub">Certify bMail identities using existing subscriber data · Zero-copy policy enforced</div></div>
+    <div><label class="form-label">Act as bCA</label><select class="form-select bca-select" onchange="setBca(this.value)" style="width:220px"></select></div>
+  </div>
+  <div class="g4" style="margin-bottom:1rem" id="bca-metrics"></div>
+  <div class="g2">
+    <div class="card sh-bca" id="bca-profile"></div>
+    <div class="card sh-bca">
+      <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-arrows-right-left"></i> Certificate issuance process</div>
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">User applies at bMail ISP</div><div class="step-desc">User selects this bCA and grants permission to use subscriber data for certification only (a signed consent token, granted here).</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">ISP sends certification request</div><div class="step-desc">Request includes bMail address and permission token. No personal data flows to ISP.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">bCA verifies via subscriber DB</div><div class="step-desc">Identity confirmed against its own records. Pseudonyms allowed — only the domain must be certified.</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Signed certificate issued</div><div class="step-desc">Certificate token returned to ISP. ISP marks the bMail ID as identifiable. Personal data stays at the bCA.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- bCA — CERTIFICATIONS -->
+<div class="view" id="view-bca-certifications">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">Certification requests</div><div class="page-sub">New registrations, re-certifications, and ID-change verifications</div></div>
+    <div><label class="form-label">Act as bCA</label><select class="form-select bca-select" onchange="setBca(this.value)" style="width:220px"></select></div>
+  </div>
+  <div class="card sh-bca">
+    <div class="inner-tabs">
+      <div class="inner-tab active" onclick="switchInnerTab(this,'cert-pending')" id="cert-pending-tab">Pending</div>
+      <div class="inner-tab" onclick="switchInnerTab(this,'cert-recent')">Recently issued</div>
+    </div>
+    <div class="inner-panel active" id="cert-pending"></div>
+    <div class="inner-panel" id="cert-recent"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>bMail ID</th><th>Type</th><th>Mode</th><th>Issued</th><th>Expiry</th><th>Status</th></tr></thead><tbody id="cert-recent-tbody"></tbody></table></div></div>
+  </div>
+  <div class="card sh-bca">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-chart-pie"></i> CA type preference by country (survey data, Anonymous 2025)</div>
+    <div class="g3">
+      <div style="padding:.875rem;background:var(--blue-50);border-radius:var(--radius);border:0.5px solid var(--blue-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--blue-800);margin-bottom:8px">South Korea</div>
+        <div style="font-size:12px;color:var(--blue-600);line-height:2"><span class="badge b-blue">Telco 66.9%</span>&nbsp;<span class="badge b-green">Bank 60.2%</span>&nbsp;<span class="badge b-gray">Govt 66.9%</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Telco &amp; govt equally preferred; KakaoTalk ecosystem influence</div>
+      </div>
+      <div style="padding:.875rem;background:var(--green-50);border-radius:var(--radius);border:0.5px solid var(--green-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--green-800);margin-bottom:8px">USA</div>
+        <div style="font-size:12px;color:var(--green-600);line-height:2"><span class="badge b-blue">Telco 36.6%</span>&nbsp;<span class="badge b-green">Bank 64.6%</span>&nbsp;<span class="badge b-gray">Govt 48.9%</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Banks strongly preferred; telcos allow anonymous numbers → lower trust</div>
+      </div>
+      <div style="padding:.875rem;background:var(--amber-50);border-radius:var(--radius);border:0.5px solid var(--amber-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--amber-800);margin-bottom:8px">China</div>
+        <div style="font-size:12px;color:var(--amber-600);line-height:2"><span class="badge b-blue">Telco 72.9%</span>&nbsp;<span class="badge b-green">Bank 66.5%</span>&nbsp;<span class="badge b-gray">Govt 66.5%</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">High power distance → stronger preference for institutional authority</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- bCA — PARTNERS -->
+<div class="view" id="view-bca-partners">
+  <div class="page-header"><div class="page-title">ISP partnerships</div><div class="page-sub">Active data-sharing agreements with bMail ISP operators</div></div>
+  <div class="card sh-bca">
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>bCA</th><th>Domains</th><th>Agreement since</th><th>Users certified</th><th>Data protocol</th><th>Status</th></tr></thead><tbody id="bca-partner-tbody"></tbody></table></div>
+    <div class="alert a-info" style="margin-top:1rem;margin-bottom:0"><i class="ti ti-lock"></i>Under the zero-copy protocol, a bCA never transmits personal data to ISP servers. Only signed certificate tokens are exchanged. ISP-side data retention: zero personal records.</div>
+  </div>
+</div>
+
+<!-- PLATFORM — DASHBOARD -->
+<div class="view" id="view-plat-dashboard">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">bMember platform — <span id="plat-title"></span></div><div class="page-sub">Member trust management · bMail ID integration · Identity-verified commerce</div></div>
+    <div><label class="form-label">Act as platform</label><select class="form-select plat-select" onchange="setPlatform(this.value)" style="width:220px"></select></div>
+  </div>
+  <div class="g4" style="margin-bottom:1rem" id="plat-metrics"></div>
+  <div class="g2">
+    <div class="card sh-platform" id="plat-breakdown"></div>
+    <div class="card sh-platform" id="plat-urgent"></div>
+  </div>
+  <div class="card sh-platform" id="plat-enroll"></div>
+</div>
+
+<!-- PLATFORM — MEMBERS -->
+<div class="view" id="view-plat-members">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">Member management</div><div class="page-sub">Individual member records with bMail ID trust indicators</div></div>
+    <div><label class="form-label">Act as platform</label><select class="form-select plat-select" onchange="setPlatform(this.value)" style="width:220px"></select></div>
+  </div>
+  <div class="card sh-platform" id="plat-member-detail"></div>
+  <div class="card sh-platform"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-users"></i> Member roster</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Login ID</th><th>Type</th><th>Certified</th><th>Orders</th><th>Review risk</th></tr></thead><tbody id="plat-member-tbody"></tbody></table></div></div>
+</div>
+
+<!-- PLATFORM — REVIEWS -->
+<div class="view" id="view-plat-reviews">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">Review trust layer</div><div class="page-sub">Identifiable authorship reduces fake reviews — a key bMail benefit for platforms</div></div>
+    <div><label class="form-label">Act as platform</label><select class="form-select plat-select" onchange="setPlatform(this.value)" style="width:220px"></select></div>
+  </div>
+  <div class="alert a-info"><i class="ti ti-info-circle"></i>bMember reviews are tagged with certification status. Consumers can filter by identifiability. Platforms gain social responsibility reputation by adopting bMail ID membership.</div>
+  <div class="g3" style="margin-bottom:1rem" id="plat-review-metrics"></div>
+  <div class="card sh-platform">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-pencil"></i> Post a review (tier is assigned from the author's login)</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Author login</label><input class="form-input" id="rv-login" placeholder="e.g. j.park@bgmail.com"></div>
+    <div class="form-group"><label class="form-label">Stars</label><select class="form-select" id="rv-stars"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div></div>
+    <div class="form-group"><label class="form-label">Text</label><input class="form-input" id="rv-text"></div>
+    <button class="btn btn-primary" onclick="postReview()"><i class="ti ti-send"></i> Post</button>
+  </div>
+  <div class="card sh-platform" id="plat-review-feed-card"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-message-2"></i> Review feed — trust indicators</div><div id="plat-review-feed"></div></div>
+</div>
+
+<!-- PLATFORM — UNREACHABLE -->
+<div class="view" id="view-plat-unreachable">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><div class="page-title">Unreachable members</div><div class="page-sub">Members with suspended or expired email IDs — initiate secure ID-change protocol</div></div>
+    <div><label class="form-label">Act as platform</label><select class="form-select plat-select" onchange="setPlatform(this.value)" style="width:220px"></select></div>
+  </div>
+  <div id="plat-unreach-summary"></div>
+  <div class="card sh-platform">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-mail"></i> ID-change outreach queue</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Legacy ID</th><th>Type</th><th>Last active</th><th>Est. LTV</th><th>Status</th><th>Action</th></tr></thead><tbody id="plat-outreach-tbody"></tbody></table></div>
+    <div class="alert a-info" style="margin-top:1rem;margin-bottom:0"><i class="ti ti-info-circle"></i>Change invites are sent through alternative contact methods (phone, social). Once a user registers a bMail ID, the secure change protocol is initiated through the bMail ISP — requiring bCA identity verification and a signed change token.</div>
+  </div>
+</div>
+
+<!-- DOMAIN VERIFICATION PORTAL (header and look-up box verbatim; the domain list is live) -->
+<div class="view" id="view-domain-portal">
+  <div class="page-header">
+    <div class="page-title">bMail domain verification portal</div>
+    <div class="page-sub">Public portal — anyone can verify whether a domain is a legitimate certified bMail domain</div>
+  </div>
+  <div class="domain-check">
+    <i class="ti ti-search" style="font-size:32px;color:var(--blue-600);display:block;margin-bottom:.75rem"></i>
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">Verify a bMail domain</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:1rem">Enter the domain from an email address you received (e.g. bgmail.com) to check if it is a certified bMail domain</div>
+    <div class="domain-input-row">
+      <input type="text" class="form-input" id="domain-input" placeholder="e.g. bgmail.com" style="font-size:15px">
+      <button class="btn btn-primary" style="padding:8px 20px;font-size:14px" onclick="checkDomain()"><i class="ti ti-search"></i> Verify</button>
+    </div>
+    <div id="domain-result" class="domain-result"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-list-check"></i> All registered bMail domains</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Certified domain</th><th>Base provider</th><th>Country focus</th><th>CA partners</th><th>Listed since</th><th>Status</th></tr></thead><tbody id="portal-tbody"></tbody></table></div>
+    <div class="alert a-warn" style="margin-top:1rem;margin-bottom:0"><i class="ti ti-alert-triangle"></i><div><strong>Common fake domains to watch for:</strong> <span id="portal-fakes"></span> — these are NOT registered bMail domains and should be treated as potential phishing attempts.</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-info-circle"></i> How to interpret a bMail address</div>
+    <div class="g3">
+      <div style="padding:.875rem;background:var(--green-50);border-radius:var(--radius);border:0.5px solid var(--green-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--green-800);margin-bottom:6px"><i class="ti ti-circle-check"></i> Legitimate bMail (real name)</div>
+        <div class="mono" style="font-size:13px;margin-bottom:6px;color:var(--green-800)">efraim.turban@bgmail.com</div>
+        <div style="font-size:12px;color:var(--green-600);line-height:1.6">Real name + certified domain. Sender is identifiable by name and domain certification.</div>
+      </div>
+      <div style="padding:.875rem;background:var(--teal-50);border-radius:var(--radius);border:0.5px solid var(--teal-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--teal-600);margin-bottom:6px"><i class="ti ti-shield"></i> Legitimate bMail (anonymous)</div>
+        <div class="mono" style="font-size:13px;margin-bottom:6px;color:var(--teal-600)">19905217@bgmail.com</div>
+        <div style="font-size:12px;color:var(--teal-600);line-height:1.6">Pseudonym name + certified domain. Sender is anonymous but domain guarantees identifiability.</div>
+      </div>
+      <div style="padding:.875rem;background:var(--red-50);border-radius:var(--radius);border:0.5px solid var(--red-100)">
+        <div style="font-size:12px;font-weight:600;color:var(--red-800);margin-bottom:6px"><i class="ti ti-ban"></i> Not a bMail address</div>
+        <div class="mono" style="font-size:13px;margin-bottom:6px;color:var(--red-800)">efraim.turban@gmail.com</div>
+        <div style="font-size:12px;color:var(--red-600);line-height:1.6">Real name but non-certified domain (gmail.com ≠ bgmail.com). Display name could be fake.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIVER TOOLS (new: the receiver side of the identifiability and verification flows) -->
+<div class="view" id="view-receiver">
+  <div class="page-header"><div class="page-title">Receiver tools</div><div class="page-sub">What a receiver of a bMail does: ask whether the sender is identifiable, report a suspicious email, check a signed token</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-id-badge-2"></i> Request identification of a sender</div>
+      <div class="form-group"><label class="form-label">You (receiver)</label><input class="form-input" id="rx-id-requester" value="Shop Example Ltd."></div>
+      <div class="form-group"><label class="form-label">Sender's bMail ID</label><input class="form-input" id="rx-id-target" value="h.lee@bgmail.com"></div>
+      <div class="form-group"><label class="form-label">Purpose</label><input class="form-input" id="rx-id-purpose" value="seller verification"></div>
+      <button class="btn btn-primary" onclick="requestIdentification()"><i class="ti ti-send"></i> Submit to bMail ISP</button>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-shield-exclamation"></i> Report a suspicious email</div>
+      <div class="form-group"><label class="form-label">You (receiver)</label><input class="form-input" id="rx-ph-receiver" value="kim.s@example.com"></div>
+      <div class="form-group"><label class="form-label">Claimed sender (bMail ID)</label><input class="form-input" id="rx-ph-target" value="j.park@bgmail.com"></div>
+      <div class="form-group"><label class="form-label">What looks wrong</label><input class="form-input" id="rx-ph-note" value="Urgent request to pay an invoice by link"></div>
+      <button class="btn btn-danger" onclick="reportPhishing()"><i class="ti ti-flag"></i> Report to bMail ISP (do not reply to the email)</button>
+    </div>
+  </div>
+  <div class="card"><div class="card-title" style="margin-bottom:1rem"><i class="ti ti-certificate"></i> Results of identification requests</div><div id="rx-results"></div></div>
+  <div class="card"><div class="card-title" style="margin-bottom:.5rem"><i class="ti ti-key"></i> Verify any signed token</div><div class="form-hint" style="margin-bottom:8px">Paste a certificate, change token or attestation; it is checked against the ISP and bCA public keys.</div><button class="btn" onclick="openToken('')"><i class="ti ti-shield-check"></i> Open token inspector</button></div>
+</div>
+
+<!-- OUTBOX (new) -->
+<div class="view" id="view-outbox">
+  <div class="page-header"><div class="page-title">Backup-channel outbox</div><div class="page-sub">Simulated KakaoTalk / SMS / backup-email gateway: every message the ISP or a platform sends outside bMail. Nothing leaves this computer.</div></div>
+  <div class="card"><div id="outbox-list"></div></div>
+</div>
+
+<!-- TRUST FLOW VISUALIZER and ARCHITECTURE (verbatim from the prototype) -->
+<div class="view" id="view-trust-flows">
+  <div class="page-header">
+    <div class="page-title">Trust flow visualizer</div>
+    <div class="page-sub">Step through the four core bMail protocols — Identifiability · Verification · Sustainability · Changeability</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem">
+    <button class="btn btn-primary" id="flbtn1" onclick="showFlow(&#39;fl&#39;,1,4)">Identifiability</button>
+    <button class="btn" id="flbtn2" onclick="showFlow(&#39;fl&#39;,2,4)">Verification (phishing)</button>
+    <button class="btn" id="flbtn3" onclick="showFlow(&#39;fl&#39;,3,4)">Sustainability</button>
+    <button class="btn" id="flbtn4" onclick="showFlow(&#39;fl&#39;,4,4)">Changeability</button>
+  </div>
+  <div id="flpanel1" class="card">
+    <div class="alert a-info"><i class="ti ti-id-badge"></i><strong>Identifiability flow</strong> — A receiver requests confirmation that a bMail sender is genuinely identifiable</div>
+    <div class="flow"><div class="fn fn-blue">Receiver</div><div class="fa">→</div><div class="fn fn-teal">bMail ISP</div><div class="fa">→</div><div class="fn fn-purple">Sender (notified)</div><div class="fa">→</div><div class="fn fn-amber">bCA (Telco/Bank)</div><div class="fa">→</div><div class="fn fn-blue">Receiver (certified)</div></div>
+    <div class="steps" style="margin-top:1rem">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Receiver submits identification request</div><div class="step-desc">Receiver asks: "Is j.park@bgmail.com a genuine identifiable sender?" Request submitted via bMail ISP portal.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">ISP validates request and notifies sender</div><div class="step-desc">ISP checks request legitimacy, then notifies the sender (j.park) for their permission to proceed with identification.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Sender reviews and approves</div><div class="step-desc">Sender decides whether to allow identification. If approved, ISP requests a certificate from the selected bCA (KT Telecom).</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">bCA issues certificate — delivered to receiver</div><div class="step-desc">Signed certificate confirms sender is identifiable. Personal data stays at bCA. Sender is notified of the disclosure event.</div></div></div>
+    </div>
+  </div>
+  <div id="flpanel2" class="card" style="display:none">
+    <div class="alert a-danger"><i class="ti ti-shield-exclamation"></i><strong>Verification flow</strong> — Receiver suspects their email came from a compromised or phishing account</div>
+    <div class="flow"><div class="fn fn-blue">Receiver (suspicious)</div><div class="fa">→</div><div class="fn fn-teal">bMail ISP</div><div class="fa">→</div><div class="fn fn-purple">Genuine sender (backup channel)</div><div class="fa">→</div><div class="fn fn-blue">Receiver (protected)</div></div>
+    <div class="steps" style="margin-top:1rem">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Receiver flags suspicious email</div><div class="step-desc">Email appears to come from h.lee@bgmail.com but content is suspicious. Receiver reports to ISP — NOT by replying to the email.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">ISP contacts sender via backup channel</div><div class="step-desc">ISP sends verification message to h.lee's registered KakaoTalk ID. The potentially compromised email address is never used in this step.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Genuine sender confirms or denies</div><div class="step-desc">If sender denies sending the email: phishing confirmed. Sender immediately changes password. ISP notifies receiver that the email was fraudulent.</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Both parties protected — incident logged</div><div class="step-desc">Receiver avoids the phishing link. Sender recovers account. ISP logs the incident. Generative AI / deepfake phishing attempts are neutralised by this backup-channel design.</div></div></div>
+    </div>
+  </div>
+  <div id="flpanel3" class="card" style="display:none">
+    <div class="alert a-success"><i class="ti ti-infinity"></i><strong>Sustainability flow</strong> — Lifelong bMail ID persists across institutional changes</div>
+    <div class="flow"><div class="fn fn-purple">User (graduates)</div><div class="fa">→</div><div class="fn fn-amber">Institution deactivates edu email</div><div class="fa">→</div><div class="fn fn-teal">bMail ISP (ID persists)</div><div class="fa">→</div><div class="fn fn-green">All platforms remain connected</div></div>
+    <div class="steps" style="margin-top:1rem">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">University deactivates jpark@univ.edu</div><div class="step-desc">Student graduates. Institutional email is terminated per university policy — a common occurrence documented across institutions (University of Minnesota, 2024).</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">bMail ID j.park@bgmail.com remains active</div><div class="step-desc">The bMail ISP guarantees lifelong service. The bMail ID is independent of any institutional affiliation. No disruption to the user's primary identifier.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">E-commerce platforms remain reachable</div><div class="step-desc">Coupang, Naver Shopping, and other platforms registered under j.park@bgmail.com continue to function normally. No broken member IDs, no lost customer relationships.</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Analogous to ORCID iD for researchers</div><div class="step-desc">Like a Persistent Identifier (PID), the bMail ID ensures continuity of identity across systems — with the added benefit of global communicability.</div></div></div>
+    </div>
+  </div>
+  <div id="flpanel4" class="card" style="display:none">
+    <div class="alert a-info"><i class="ti ti-arrows-exchange"></i><strong>Changeability flow</strong> — Secure protocol to update a platform member ID when the old email expires</div>
+    <div class="flow"><div class="fn fn-purple">User</div><div class="fa">→</div><div class="fn fn-teal">bMail ISP</div><div class="fa">→</div><div class="fn fn-amber">bCA verifies identity</div><div class="fa">→</div><div class="fn fn-teal">ISP issues change token</div><div class="fa">→</div><div class="fn fn-blue">Platform updates record</div></div>
+    <div class="steps" style="margin-top:1rem">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">User requests ID change at bMail ISP</div><div class="step-desc">Old ID: jpark@univ.edu (expired). New ID: j.park@bgmail.com. User selects platforms to update.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">ISP requests identity re-verification from bCA</div><div class="step-desc">KT Telecom confirms the user is the legitimate owner of both the old and new IDs. No fraudulent substitution is possible.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">ISP generates and transmits a signed change token</div><div class="step-desc">Cryptographically signed token contains old ID, new ID, bCA confirmation, and timestamp. Transmitted to each selected platform via secure protocol.</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Platform verifies token and updates member record</div><div class="step-desc">Old ID remapped to new bMail ID. All purchase history, reviews, loyalty points, and preferences are preserved. Zero duplicate-ID risk. Platforms like Naver and KakaoTalk that currently prohibit ID changes (Inquivix, 2023; Naver, 2025) can enable this through the bMail protocol.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  ARCHITECTURE
+═════════════════════════════════════════════ -->
+<div class="view" id="view-architecture">
+  <div class="page-header">
+    <div class="page-title">System architecture</div>
+    <div class="page-sub">Stakeholder roles and interactions — based on Figure 3, Anonymous (2025)</div>
+  </div>
+  <div class="arch-grid">
+    <div class="arch-node an-blue">
+      <div class="an-title"><i class="ti ti-user" style="color:var(--blue-600)"></i> bMail User</div>
+      <ul class="an-list">
+        <li>Registers bMail ID at ISP (real name or anonymous)</li>
+        <li>Selects bCA and grants identity permission</li>
+        <li>Provides backup verification channels</li>
+        <li>Approves or rejects identification requests</li>
+        <li>Registers on platforms using bMail ID</li>
+        <li>Initiates ID-change protocol when needed</li>
+      </ul>
+    </div>
+    <div class="arch-node an-teal">
+      <div class="an-title"><i class="ti ti-server" style="color:var(--teal-600)"></i> bMail ISP</div>
+      <ul class="an-list">
+        <li>Issues bMail domain names (bgmail.com etc.)</li>
+        <li>Enforces authentication (DKIM/SPF/DMARC/ARC)</li>
+        <li>Lists certified domains on public portal</li>
+        <li>Manages identification service (with user approval)</li>
+        <li>Routes verification via backup channels</li>
+        <li>Issues signed ID-change tokens to platforms</li>
+        <li>Monitors propagation and blocks fake domains</li>
+        <li>Never stores personal data (zero-copy)</li>
+      </ul>
+    </div>
+    <div class="arch-node an-amber">
+      <div class="an-title"><i class="ti ti-shield-check" style="color:var(--amber-600)"></i> bCA (Certification Authority)</div>
+      <ul class="an-list">
+        <li>Holds genuine identity data (telco, bank, govt)</li>
+        <li>Issues signed certificate tokens to ISP</li>
+        <li>Personal data never transmitted to ISP</li>
+        <li>Certifies pseudonyms and real names alike</li>
+        <li>Verifies identity for ID-change requests</li>
+        <li>Annual certificate renewal</li>
+      </ul>
+    </div>
+    <div class="arch-node an-purple">
+      <div class="an-title"><i class="ti ti-building-store" style="color:var(--purple-600)"></i> bMember Platform</div>
+      <ul class="an-list">
+        <li>Recognises bMembers as identifiable customers</li>
+        <li>Implements secure ID-change protocol with ISP</li>
+        <li>Tags reviews by author certification status</li>
+        <li>Reduces fake reviews and fake accounts</li>
+        <li>Retains customers through lifelong bMail IDs</li>
+        <li>Gains social responsibility reputation</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:1rem"><i class="ti ti-chart-bar"></i> SEM validation summary (Anonymous, 2025) — all 8 hypotheses supported</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Hypothesis</th><th>Path</th><th>Pooled β</th><th>Korea β</th><th>USA β</th><th>China β</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>H1</td><td>eMail ID properties → Sender adoption</td><td>0.227</td><td>0.263</td><td>0.284</td><td>0.178</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H2</td><td>bMail ID properties → Individual trust</td><td>0.652</td><td>0.594</td><td>0.719</td><td>0.547</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H3</td><td>Individual trust → Sender adoption</td><td>0.310</td><td>0.321</td><td>0.280</td><td>0.181</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H4</td><td>Changeability → Sender adoption</td><td>0.223</td><td>0.160</td><td>0.245</td><td>0.234</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H5</td><td>Social eMail properties → Receiver adoption</td><td>0.184</td><td>0.187</td><td>0.284</td><td>0.291</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H6</td><td>Social bMail properties → Social trust</td><td>0.692</td><td>0.749</td><td>0.728</td><td>0.519</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H7</td><td>Social trust → Receiver adoption</td><td>0.483</td><td>0.506</td><td>0.439</td><td>0.302</td><td><span class="badge b-green">Supported***</span></td></tr>
+          <tr><td>H8</td><td>Sender + Receiver adoption → User adoption</td><td>0.348 / 0.493</td><td>0.262 / 0.598</td><td>0.312 / 0.568</td><td>0.243 / 0.374</td><td><span class="badge b-green">Supported***</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">*** p &lt; 0.001. Data: N=1,248 (South Korea 387, USA 440, China 421). Method: SmartPLS 4.0, bootstrapping 10,000 resamples.</div>
+  </div>
+</div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- FLOATING TRANSACTION PANEL (markup verbatim; buttons now call the API) -->
+<div class="txn-panel" id="txn-panel">
+  <div class="txn-header" onclick="toggleTxnPanel()">
+    <div>
+      <div class="txn-header-title"><i class="ti ti-arrows-exchange"></i> Prof. Morgan — Transactions</div>
+      <div class="txn-header-sub" id="txn-header-sub">0 / 4 complete · click to expand</div>
+    </div>
+    <button class="txn-toggle" id="txn-toggle-btn">▲</button>
+  </div>
+  <div class="txn-body">
+
+    <div class="txn-status-row">
+      <span id="gs1" class="badge b-gray" style="font-size:10px">1. SKT bCA</span>
+      <span id="gs2" class="badge b-gray" style="font-size:10px">2. bMail ID</span>
+      <span id="gs3" class="badge b-gray" style="font-size:10px">3. Amazon</span>
+      <span id="gs4" class="badge b-gray" style="font-size:10px">4. Enroll</span>
+    </div>
+
+    <!-- Txn 1 -->
+    <button class="txn-btn" id="tb1" onclick="doT1()">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-building-broadcast-tower" style="font-size:13px;color:var(--amber-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">1. SKT joins as bCA</div>
+          <div class="txn-btn-desc">SK Telecom · zero-copy protocol</div>
+        </div>
+      </div>
+      <span id="tb1-badge" class="badge b-amber" style="font-size:10px">Run</span>
+    </button>
+    <div class="txn-progress" id="tp1"><div class="txn-progress-bar" id="tpb1" style="width:0%"></div></div>
+
+    <!-- Txn 2 -->
+    <button class="txn-btn" id="tb2" onclick="doT2()" disabled="">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-user-plus" style="font-size:13px;color:var(--blue-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">2. Register bMail ID</div>
+          <div class="txn-btn-desc">alex.morgan@bgmail.com</div>
+        </div>
+      </div>
+      <span id="tb2-badge" class="badge b-gray" style="font-size:10px">Locked</span>
+    </button>
+    <div class="txn-progress" id="tp2"><div class="txn-progress-bar" id="tpb2" style="width:0%"></div></div>
+
+    <!-- Txn 3 -->
+    <button class="txn-btn" id="tb3" onclick="doT3()">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-building-store" style="font-size:13px;color:var(--purple-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">3. Amazon joins bMember</div>
+          <div class="txn-btn-desc">ID-change protocol · review tiers</div>
+        </div>
+      </div>
+      <span id="tb3-badge" class="badge b-amber" style="font-size:10px">Run</span>
+    </button>
+    <div class="txn-progress" id="tp3"><div class="txn-progress-bar" id="tpb3" style="width:0%"></div></div>
+
+    <!-- Txn 4 -->
+    <button class="txn-btn" id="tb4" onclick="doT4()" disabled="">
+      <div class="txn-btn-left">
+        <div class="txn-btn-icon"><i class="ti ti-id-badge-2" style="font-size:13px;color:var(--green-600)"></i></div>
+        <div>
+          <div class="txn-btn-label">4. Enroll at Amazon</div>
+          <div class="txn-btn-desc">Prof. Morgan → Amazon bMember</div>
+        </div>
+      </div>
+      <span id="tb4-badge" class="badge b-gray" style="font-size:10px">Locked</span>
+    </button>
+    <div class="txn-progress" id="tp4"><div class="txn-progress-bar" id="tpb4" style="width:0%"></div></div>
+
+    <div id="txn-log" class="txn-log"></div>
+
+  </div><!-- /txn-body -->
+</div><!-- /txn-panel -->
+
+<script src="app.js"></script>
+</body></html>
